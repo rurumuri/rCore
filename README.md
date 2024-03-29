@@ -2,9 +2,12 @@
 
 愿此行，终抵星海
 
-基于 https://github.com/rcore-os/rCore-Tutorial-v3，仓库内的`os`目录包含跟随教程逐步实现的rCore OS
+基于 https://github.com/rcore-os/rCore-Tutorial-v3 ，仓库内的`os`目录包含跟随教程逐步实现的rCore OS
 
-目前进度：LibOS，能输出字符串和关机
+目前进度阶段：LibOS
+
+- 支持通过rustsbi输出字符串和关机
+- 支持LOG彩色输出和等级控制
 
 ## 运行
 

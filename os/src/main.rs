@@ -1,20 +1,29 @@
-#![no_main] // no main()
-#![no_std] // use rust core library rather than std (which need OS environment)
+#![no_main]
+#![no_std]
 #![feature(panic_info_message)]
 
-// at the module's root file (main.rs), we need to list all submod we will use
-#[macro_use] // use macros from marco. Just available for the next line!
+
+use core::arch::global_asm;
+
+
+#[macro_use]
 mod console;
 mod sbi;
 mod lang_items;
+mod logger;
+use log::*;
 
-use core::arch::global_asm;
-global_asm!(include_str!("entry.asm")); // import entry.asm as string, then insert it
 
+global_asm!(include_str!("entry.asm"));
 
-#[no_mangle] // tell the compiler not to change the function's name
+#[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
+    logger::init(LevelFilter::Trace).expect("Logger initialize failed");
+
+    os_info();
+    logger_test();
+
     println!("Hello rCore");
     panic!("Bye");
 }
@@ -27,4 +36,32 @@ fn clear_bss() {
     (sbss as usize..ebss as usize).for_each(|a| {
         unsafe { (a as *mut u8).write_volatile(0) }
     });
+}
+
+fn os_info() {
+    extern "C" {
+        fn skernel();
+        fn ekernel();
+        fn stext();
+        fn etext();
+        fn srodata();
+        fn erodata();
+        fn sdata();
+        fn edata();
+        fn sbss();
+        fn ebss();
+    }
+    info!("kernel\t[{:#x}, {:#x})", skernel as usize, ekernel as usize);
+    info!(".text\t[{:#x}, {:#x})", stext as usize, etext as usize);
+    info!(".rodata\t[{:#x}, {:#x})", srodata as usize, erodata as usize);
+    info!(".data\t[{:#x}, {:#x})", sdata as usize, edata as usize);
+    info!(".bss\t[{:#x}, {:#x})", sbss as usize, ebss as usize);
+}
+
+fn logger_test() {
+    error!("very serious errors");
+    warn!("hazardous situations");
+    info!("useful information");
+    debug!("lower priority information");
+    trace!("very low priority, often extremely verbose, information");
 }
