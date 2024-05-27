@@ -12,9 +12,14 @@ mod sbi;
 mod lang_items;
 mod logger;
 use log::*;
+mod sync;
+mod batch;
+mod syscall;
+mod trap;
 
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
 pub fn rust_main() -> ! {
@@ -22,10 +27,12 @@ pub fn rust_main() -> ! {
     logger::init(LevelFilter::Trace).expect("Logger initialize failed");
 
     os_info();
-    logger_test();
 
-    println!("Hello rCore");
-    panic!("Bye");
+    trap::init();
+    batch::init();
+    batch::run_next_app();
+
+    panic!("Unreachable in rust_main!");
 }
 
 fn clear_bss() {
@@ -51,17 +58,9 @@ fn os_info() {
         fn sbss();
         fn ebss();
     }
-    info!("kernel\t[{:#x}, {:#x})", skernel as usize, ekernel as usize);
-    info!(".text\t[{:#x}, {:#x})", stext as usize, etext as usize);
-    info!(".rodata\t[{:#x}, {:#x})", srodata as usize, erodata as usize);
-    info!(".data\t[{:#x}, {:#x})", sdata as usize, edata as usize);
-    info!(".bss\t[{:#x}, {:#x})", sbss as usize, ebss as usize);
-}
-
-fn logger_test() {
-    error!("very serious errors");
-    warn!("hazardous situations");
-    info!("useful information");
-    debug!("lower priority information");
-    trace!("very low priority, often extremely verbose, information");
+    info!("[kernel] kernel\t[{:#x}, {:#x})", skernel as usize, ekernel as usize);
+    info!("[kernel] .text\t[{:#x}, {:#x})", stext as usize, etext as usize);
+    info!("[kernel] .rodata\t[{:#x}, {:#x})", srodata as usize, erodata as usize);
+    info!("[kernel] .data\t[{:#x}, {:#x})", sdata as usize, edata as usize);
+    info!("[kernel] .bss\t[{:#x}, {:#x})", sbss as usize, ebss as usize);
 }
