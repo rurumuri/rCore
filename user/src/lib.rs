@@ -39,3 +39,7 @@ pub fn write(fd: usize, buffer: &[u8]) -> isize {
 pub fn exit(xstate: i32) -> isize {
     sys_exit(xstate)
 }
+
+pub fn yield_() -> isize {
+    sys_yield()
+}

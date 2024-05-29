@@ -2,13 +2,14 @@
 
 愿此行，终抵星海
 
-基于 https://github.com/rcore-os/rCore-Tutorial-v3 ，仓库内的`os`目录包含跟随教程逐步实现的rCore OS
+基于 https://github.com/rcore-os/rCore-Tutorial-v3
 
-目前进度阶段：BatchOS
+目前进度阶段：MultiprogOS
 
-- 支持用户态和内核态的切换
-- 支持加载单个预先编译的app并在用户态执行
-- 为用户态app支持系统调用
+新增的内容：
+
+- 支持一次性加载多个app到内存不同区域
+- 保存内核的一些配置参数到`os/src/config.rs`
 
 ## 环境配置
 

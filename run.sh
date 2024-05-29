@@ -2,12 +2,12 @@
 
 # build user
 cd user
-cargo clean
+# cargo clean
 make build
 cd ..
 # build os
 cd os
-cargo clean
+# cargo clean
 cargo build --release
 # obj-copy
 rust-objcopy --strip-all target/riscv64gc-unknown-none-elf/release/os \

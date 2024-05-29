@@ -2,13 +2,15 @@ use core::arch::asm;
 use crate::sync::UPSafeCell;
 use lazy_static::*;
 use crate::trap::context::TrapContext;
+use crate::config::*;
+use log::info;
 
-const USER_STACK_SIZE: usize = 4096 * 2;
-const KERNEL_STACK_SIZE: usize = 4096 * 2;
+// const USER_STACK_SIZE: usize = 4096 * 2;
+// const KERNEL_STACK_SIZE: usize = 4096 * 2;
 
-const MAX_APP_NUM: usize = 16;
-const APP_BASE_ADDRESS: usize = 0x80400000;
-const APP_SIZE_LIMIT: usize = 0x20000;
+// const MAX_APP_NUM: usize = 16;
+// const APP_BASE_ADDRESS: usize = 0x80400000;
+// const APP_SIZE_LIMIT: usize = 0x20000;
 
 #[repr(align(4096))]
 struct KernelStack {
@@ -51,9 +53,9 @@ struct AppManager {
 
 impl AppManager {
     pub fn print_app_info(&self) {
-        println!("[kernel] num_app = {}", self.num_app);
+        info!("[kernel] num_app = {}", self.num_app);
         for i in 0..self.num_app {
-            println!(
+            info!(
                 "[kernel] app_{} [{:#x}, {:#x})",
                 i,
                 self.app_start[i],
@@ -72,7 +74,7 @@ impl AppManager {
         if(app_id >= self.num_app) {
             panic!("[Kernel] All apps completed!");
         }
-        print!("[kernel] Loading app_{}", app_id);
+        info!("[kernel] Loading app_{}", app_id);
         // clear app area
         core::slice::from_raw_parts_mut(
             APP_BASE_ADDRESS as *mut u8, 
@@ -133,6 +135,32 @@ pub fn run_next_app() -> ! {
     unsafe {
         __restore(KERNEL_STACK.push_context(
             TrapContext::app_init_context(APP_BASE_ADDRESS, USER_STACK.get_sp())
+        ) as *const _ as usize);
+    }
+    panic!("Unreachable in batch::run_current_app!");
+}
+
+pub fn run_next_app_without_load() -> ! {
+    let mut app_manager = APP_MANAGER.exclusive_access();
+    let current_app = app_manager.get_current_app();
+
+    extern "C" {
+        fn _num_app();
+    }
+    let app_id = unsafe{(_num_app as usize as *const usize).read_volatile()};
+    if(current_app >= app_id) {
+        panic!("[Kernel] All apps completed!");
+    }
+    info!("[kernel] Running app_{}", current_app);
+
+    // unsafe{ app_manager.load_app(current_app); }
+    app_manager.move_to_next_app();
+    drop(app_manager);
+
+    extern "C" {fn __restore(cx_addr: usize);}
+    unsafe {
+        __restore(KERNEL_STACK.push_context(
+            TrapContext::app_init_context(APP_BASE_ADDRESS + current_app * APP_SIZE_LIMIT, USER_STACK.get_sp())
         ) as *const _ as usize);
     }
     panic!("Unreachable in batch::run_current_app!");

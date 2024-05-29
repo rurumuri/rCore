@@ -1,8 +1,9 @@
 pub(crate) mod context;
 
-use crate::batch::run_next_app;
+use crate::batch::run_next_app_without_load;
 use crate::syscall::syscall;
 use crate::trap::context::TrapContext;
+use log::{warn, error};
 
 use core::{arch::global_asm, f32::consts::E};
 use riscv::register::{
@@ -32,12 +33,14 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
         Trap::Exception(Exception::StoreFault) |
         Trap::Exception(Exception::StorePageFault) => {
-            println!("[kernel] PageFault in application, kernel killed it.");
-            run_next_app();
+            error!("[kernel] PageFault in application, kernel killed it.");
+            // run_next_app();
+            run_next_app_without_load();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            println!("[kernel] IllegalInstruction in application, kernel killed it.");
-            run_next_app();
+            error!("[kernel] IllegalInstruction in application, kernel killed it.");
+            // run_next_app();
+            run_next_app_without_load();
         }
         _ => {
             panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);

@@ -16,23 +16,28 @@ mod sync;
 mod batch;
 mod syscall;
 mod trap;
+mod task;
+mod config;
+mod loader;
+mod timer;
 
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
 #[no_mangle]
-pub fn rust_main() -> ! {
+pub fn rust_main() {
     clear_bss();
     logger::init(LevelFilter::Trace).expect("Logger initialize failed");
+
+    // kernel_stack_test(0);
 
     os_info();
 
     trap::init();
     batch::init();
-    batch::run_next_app();
-
-    panic!("Unreachable in rust_main!");
+    loader::load_apps();
+    batch::run_next_app_without_load();
 }
 
 fn clear_bss() {
@@ -63,4 +68,18 @@ fn os_info() {
     info!("[kernel] .rodata\t[{:#x}, {:#x})", srodata as usize, erodata as usize);
     info!("[kernel] .data\t[{:#x}, {:#x})", sdata as usize, edata as usize);
     info!("[kernel] .bss\t[{:#x}, {:#x})", sbss as usize, ebss as usize);
+}
+
+fn kernel_stack_test(x: usize) {
+    info!("[kernel] stack test {}", x);
+    // if x==701 {
+    //     os_info();
+
+    //     trap::init();
+    //     batch::init();
+    //     loader::load_apps();
+    //     batch::run_next_app_without_load();
+    //     return;
+    // }
+    kernel_stack_test(x+1);
 }
