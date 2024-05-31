@@ -1,6 +1,10 @@
 pub(crate) mod context;
 
-use crate::batch::run_next_app_without_load;
+// use crate::batch::run_next_app_without_load;
+use crate::task::{
+    exit_current_and_run_next,
+    suspend_current_and_run_next,
+};
 use crate::syscall::syscall;
 use crate::trap::context::TrapContext;
 use log::{warn, error};
@@ -35,12 +39,14 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         Trap::Exception(Exception::StorePageFault) => {
             error!("[kernel] PageFault in application, kernel killed it.");
             // run_next_app();
-            run_next_app_without_load();
+            // run_next_app_without_load();
+            exit_current_and_run_next();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
             error!("[kernel] IllegalInstruction in application, kernel killed it.");
             // run_next_app();
-            run_next_app_without_load();
+            // run_next_app_without_load();
+            exit_current_and_run_next();
         }
         _ => {
             panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);

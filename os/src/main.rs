@@ -13,7 +13,7 @@ mod lang_items;
 mod logger;
 use log::*;
 mod sync;
-mod batch;
+// mod batch;
 mod syscall;
 mod trap;
 mod task;
@@ -35,9 +35,10 @@ pub fn rust_main() {
     os_info();
 
     trap::init();
-    batch::init();
+    // batch::init();
     loader::load_apps();
-    batch::run_next_app_without_load();
+    // batch::run_next_app_without_load();
+    task::run_first_task();
 }
 
 fn clear_bss() {
