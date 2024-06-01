@@ -43,3 +43,32 @@ pub fn exit(xstate: i32) -> isize {
 pub fn yield_() -> isize {
     sys_yield()
 }
+
+#[repr(C)]
+pub struct TimeVal {
+    pub sec: usize,
+    pub usec: usize,
+}
+
+impl TimeVal {
+    pub fn new() -> Self {
+        TimeVal { sec: 0, usec: 0 }
+    }
+}
+
+impl Default for TimeVal {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn get_time_us() -> usize {
+    let mut ts = TimeVal { usec: 0, sec: 0 };
+    sys_get_time(&mut ts, 0);
+    ts.usec
+}
+
+
+pub fn get_time() -> usize {
+    get_time_us() / 1000
+}

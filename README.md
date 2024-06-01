@@ -10,14 +10,15 @@
 
 - 支持一次性加载多个app到内存不同区域
 - 支持多应用任务切换
-- 支持sys_yeild系统调用
+- 支持 `sys_yeild`、`sys_get_time`系统调用
+- 支持时钟中断和分时多任务
 - 保存内核的一些配置参数到`os/src/config.rs`
 
 ## 备注
 
 ### 关于数据布局导致的问题
 
-```
+```Rust
 // os/src/task/context.rs line 3-12
 
 // 经过多次debug，最终发现是缺了这里。
@@ -35,7 +36,7 @@ pub struct TaskContext {
 
 尝试下面的代码：
 
-```
+```Rust
 use std::mem::{align_of, size_of};
 
 struct RustStruct { ra: usize, sp: usize, s: [usize; 12], }
@@ -99,7 +100,7 @@ boot_stack_top:
 
 尝试在`os/src/main.rs`的`rust_main`中调用以下函数：
 
-```
+```Rust
 fn kernel_stack_test(x: usize) {
     info!("[kernel] stack test {}", x);
     kernel_stack_test(x+1);

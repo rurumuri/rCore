@@ -37,6 +37,8 @@ pub fn rust_main() {
     trap::init();
     // batch::init();
     loader::load_apps();
+    trap::enable_timer_interrupt();
+    timer::set_next_trigger();
     // batch::run_next_app_without_load();
     task::run_first_task();
 }
