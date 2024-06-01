@@ -13,8 +13,9 @@
 - 支持sys_yeild系统调用
 - 保存内核的一些配置参数到`os/src/config.rs`
 
-## 备注：关于数据布局
+## 备注
 
+### 关于数据布局导致的问题
 
 ```
 // os/src/task/context.rs line 3-12
@@ -32,29 +33,82 @@ pub struct TaskContext {
 
 ```
 
-chatGPT的解释：
+尝试下面的代码：
 
+```
+use std::mem::{align_of, size_of};
 
-    在Rust中，`#[repr(C)]`是一个属性，它改变了数据结构的内存布局以使其与C语言的内存布局兼容。`repr`是"representation"的缩写，`C`表示这种布局应与C语言的布局兼容。
+struct RustStruct { ra: usize, sp: usize, s: [usize; 12], }
+#[repr(C)]
+struct CStruct { ra: usize, sp: usize, s: [usize; 12], }
 
-    默认情况下，Rust编译器可以自由地调整数据结构的内存布局以优化性能。例如，它可能会重新排序结构体的字段或添加填充以改善内存访问的速度。然而，这种自由的内存布局可能会与其他语言（如C语言）的内存布局不兼容。
+fn main() {
+    let r = RustStruct { ra: 0, sp: 0, s: [0; 12] };
+    let c = CStruct { ra: 0, sp: 0, s: [0; 12] };
 
-    当你需要与C语言（或任何假设C兼容内存布局的语言）的代码交互时，你可能需要使用`#[repr(C)]`来确保你的数据结构在内存中的布局与C语言的布局相同。例如，如果你正在编写一个Rust函数，该函数将被C代码调用并接收一个指向C结构体的指针，那么你需要使用`#[repr(C)]`来定义一个与该C结构体内存布局相同的Rust结构体。
+    let r_addr = &r as *const RustStruct as usize;
+    let r_ra_addr = &r.ra as *const usize as usize;
+    let r_sp_addr = &r.sp as *const usize as usize;
+    let r_s_addr = &r.s as *const [usize; 12] as usize;
 
-    例如：
+    let c_addr = &c as *const CStruct as usize;
+    let c_ra_addr = &c.ra as *const usize as usize;
+    let c_sp_addr = &c.sp as *const usize as usize;
+    let c_s_addr = &c.s as *const [usize; 12] as usize;
 
-    ```rust
-    #[repr(C)]
-    struct MyStruct {
-        a: u32,
-        b: f32,
-    }
-    ```
+    println!("RustStruct r\nr_start: {:#x}\nra: {:#x}\nsp: {:#x}\ns: {:#x}", r_addr, r_ra_addr, r_sp_addr, r_s_addr);
+    println!("CStruct c\nc_start: {:#x}\nra: {:#x}\nsp: {:#x}\ns: {:#x}", c_addr, c_ra_addr, c_sp_addr, c_s_addr);
+}
+```
 
-    在这个例子中，`MyStruct`的内存布局将与C语言中具有相同字段类型的结构体的布局相同。
+输出为：
 
-    请注意，使用`#[repr(C)]`可能会影响性能，因为它限制了编译器优化内存布局的能力。因此，你应该只在需要与C语言代码交互时使用它。
+```
+RustStruct r
+r_start: 0x7ffea9971e18
+ra: 0x7ffea9971e78
+sp: 0x7ffea9971e80
+s: 0x7ffea9971e18
+CStruct c
+c_start: 0x7ffea9971ee8
+ra: 0x7ffea9971ee8
+sp: 0x7ffea9971ef0
+s: 0x7ffea9971ef8
+```
 
+可见C布局下`CStruct`0偏移量处即为ra，而Rust布局下并非如此
+
+简单来说，Rust对`TaskContext`结构体的默认布局方式是`repr(Rust)`，编译器可能进行字段重排、填充等方式进行对齐和优化；而在`extern "C"`的函数`__switch`中发生了跨FFI边界访问，这要求`TaskContext`结构体使用`repr(C)`即C的方式布局。两者布局未达成一致，导致`__switch`中使用偏移量访问`TaskContext`时读到了无效值，从而导致了访问无效内存0x0，使内核卡住等问题。
+
+参考：
+
+- 《Rust 死灵书》（The Rustonomicon） - Rust 中的数据布局：https://nomicon.purewhite.io/data.html
+- 《Rust 参考手册》（The Rust Reference） - 类型布局：https://rustwiki.org/zh-CN/reference/type-layout.html
+- rust-bindgen：https://rust-lang.github.io/rust-bindgen/introduction.html
+
+### 关于内核boot_stack栈区域大小的尝试
+
+```asm
+# os/src/entry.asm line 8-12
+    .globl boot_stack_lower_bound
+boot_stack_lower_bound:
+    .space 4096 * 16
+    .globl boot_stack_top
+boot_stack_top:
+```
+
+尝试在`os/src/main.rs`的`rust_main`中调用以下函数：
+
+```
+fn kernel_stack_test(x: usize) {
+    info!("[kernel] stack test {}", x);
+    kernel_stack_test(x+1);
+}
+```
+
+并多次修改`.space`的大小，发现测试函数递归次数确实不同，从而证实了`boot_stack`的作用
+
+然而，在设置`.space`为0后，测试函数仍然能够递归很少的几次（或者能正常执行此前`rust_main`中的内核函数调用），暂时不清楚原本的栈信息存到了哪里，存疑
 
 ## 环境配置
 
