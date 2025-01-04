@@ -2,25 +2,22 @@
 #![no_std]
 #![feature(panic_info_message)]
 
-
 use core::arch::global_asm;
-
 
 #[macro_use]
 mod console;
-mod sbi;
 mod lang_items;
 mod logger;
+mod sbi;
 use log::*;
 mod sync;
 // mod batch;
-mod syscall;
-mod trap;
-mod task;
 mod config;
 mod loader;
+mod syscall;
+mod task;
 mod timer;
-
+mod trap;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -48,9 +45,7 @@ fn clear_bss() {
         fn sbss();
         fn ebss();
     }
-    (sbss as usize..ebss as usize).for_each(|a| {
-        unsafe { (a as *mut u8).write_volatile(0) }
-    });
+    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
 fn os_info() {
@@ -66,11 +61,26 @@ fn os_info() {
         fn sbss();
         fn ebss();
     }
-    info!("[kernel] kernel\t[{:#x}, {:#x})", skernel as usize, ekernel as usize);
-    info!("[kernel] .text\t[{:#x}, {:#x})", stext as usize, etext as usize);
-    info!("[kernel] .rodata\t[{:#x}, {:#x})", srodata as usize, erodata as usize);
-    info!("[kernel] .data\t[{:#x}, {:#x})", sdata as usize, edata as usize);
-    info!("[kernel] .bss\t[{:#x}, {:#x})", sbss as usize, ebss as usize);
+    info!(
+        "[kernel] kernel\t[{:#x}, {:#x})",
+        skernel as usize, ekernel as usize
+    );
+    info!(
+        "[kernel] .text\t[{:#x}, {:#x})",
+        stext as usize, etext as usize
+    );
+    info!(
+        "[kernel] .rodata\t[{:#x}, {:#x})",
+        srodata as usize, erodata as usize
+    );
+    info!(
+        "[kernel] .data\t[{:#x}, {:#x})",
+        sdata as usize, edata as usize
+    );
+    info!(
+        "[kernel] .bss\t[{:#x}, {:#x})",
+        sbss as usize, ebss as usize
+    );
 }
 
 fn kernel_stack_test(x: usize) {
@@ -84,5 +94,5 @@ fn kernel_stack_test(x: usize) {
     //     batch::run_next_app_without_load();
     //     return;
     // }
-    kernel_stack_test(x+1);
+    kernel_stack_test(x + 1);
 }

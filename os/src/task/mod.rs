@@ -1,16 +1,16 @@
-mod task;
-mod switch;
 mod context;
+mod switch;
+mod task;
 
-use crate::sync::UPSafeCell;
-use task::{TaskControlBlock, TaskStatus};
 use crate::config::MAX_APP_NUM;
-use lazy_static::lazy_static;
-use context::TaskContext;
 use crate::loader::{get_app_num, init_app_cx};
-use switch::__switch;
 use crate::sbi::shutdown;
+use crate::sync::UPSafeCell;
+use context::TaskContext;
+use lazy_static::lazy_static;
 use log::trace;
+use switch::__switch;
+use task::{TaskControlBlock, TaskStatus};
 pub struct TaskManager {
     num_app: usize,
     inner: UPSafeCell<TaskManagerInner>,
@@ -49,7 +49,6 @@ lazy_static! {
     };
 }
 
-
 impl TaskManager {
     /// Run the first task in task list.
     ///
@@ -62,13 +61,13 @@ impl TaskManager {
         task0.task_status = TaskStatus::Running;
         let next_task_cx_ptr = &task0.task_cx as *const TaskContext;
         // log::trace!("111{:#x}", task0.task_cx.ra as usize);
-        
+
         // from https://rcore-os.cn/rCore-Tutorial-Book-v3/chapter3/3multiprogramming.html#sys-yield-sys-exit
         // 如果不手动 drop 的话，编译器会在 __switch 返回时，也就是当前应用被切换回来的时候才 drop，
         // 这期间我们都不能修改 TaskManagerInner ，甚至不能读（因为之前是可变借用），会导致内核 panic 报错退出。
         // 正因如此，我们需要在 __switch 前提早手动 drop 掉 inner 。
         drop(inner);
-        
+
         let mut _unused = TaskContext::zero_init();
         // before this, we should drop local variables that must be dropped manually
         trace!("[kernel] Switching task context to the first app");

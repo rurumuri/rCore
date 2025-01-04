@@ -8,7 +8,9 @@ unsafe impl<T> Sync for UPSafeCell<T> {}
 
 impl<T> UPSafeCell<T> {
     pub fn new(value: T) -> Self {
-        Self {inner: RefCell::new(value)}
+        Self {
+            inner: RefCell::new(value),
+        }
     }
     pub fn exclusive_access(&self) -> RefMut<T> {
         self.inner.borrow_mut()

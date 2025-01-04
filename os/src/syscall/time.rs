@@ -12,6 +12,8 @@ pub fn sys_get_time(ts: usize, _tz: usize) -> isize {
         sec: usec / MICRO_PER_SEC,
         usec,
     };
-    unsafe {*(ts as *mut TimeVal) = time_val;}
+    unsafe {
+        *(ts as *mut TimeVal) = time_val;
+    }
     0
 }

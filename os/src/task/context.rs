@@ -22,7 +22,7 @@ impl TaskContext {
     }
 
     /// set task context {__restore ASM funciton, kernel stack, s_0..12 }
-    /// Now we has multiple apps (tasks) and each app (task) has it's own kernel stack. 
+    /// Now we has multiple apps (tasks) and each app (task) has it's own kernel stack.
     /// so we need to give the specific kstack_ptr.
     pub fn goto_restore(kstack_ptr: usize) -> Self {
         extern "C" {

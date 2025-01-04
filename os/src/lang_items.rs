@@ -6,9 +6,9 @@ use log::*;
 fn panic(info: &PanicInfo) -> ! {
     if let Some(location) = info.location() {
         error!(
-            "Panicked at {} {} {}", 
-            location.file(), 
-            location.line(), 
+            "Panicked at {} {} {}",
+            location.file(),
+            location.line(),
             info.message().unwrap()
         );
     } else {
