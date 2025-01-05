@@ -1,3 +1,9 @@
+/*!
+ * task
+ * user app execute and switch
+ *
+*/
+
 mod context;
 mod switch;
 mod task;
@@ -11,9 +17,10 @@ use lazy_static::lazy_static;
 use log::trace;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
+
 pub struct TaskManager {
     num_app: usize,
-    inner: UPSafeCell<TaskManagerInner>,
+    inner: UPSafeCell<TaskManagerInner>, // use `UPSafeCell` so that we can visit inner globally and safely
 }
 
 struct TaskManagerInner {
@@ -21,6 +28,7 @@ struct TaskManagerInner {
     current_task: usize,
 }
 
+// TASK_MANAGER will be initialized when first visited
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
         // trace!("[kernel] TASK_MANAGER has been initialized");
@@ -78,6 +86,7 @@ impl TaskManager {
     }
 
     /// Change the status of current `Running` task into `Ready`.
+    /// Then it can be run when next time app loader is finding next runnable task
     fn mark_current_suspended(&self) {
         let mut inner = self.inner.exclusive_access();
         let current = inner.current_task;
@@ -119,7 +128,7 @@ impl TaskManager {
             }
             // go back to user mode
         } else {
-            println!("All applications completed!");
+            trace!("[kernel] All applications completed! Shutdown now.");
             shutdown(false);
         }
     }
@@ -151,7 +160,7 @@ pub fn suspend_current_and_run_next() {
     run_next_task();
 }
 
-/// exit current task,  then run next task
+/// exit current task, then run next task
 pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();

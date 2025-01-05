@@ -1,6 +1,6 @@
-/*
-    简单的logger，支持log等级控制和彩色输出
-    实现参考：https://docs.rs/log/0.4.14/log/#implementing-a-logger
+/*!
+ * 简单的logger，支持log等级控制和彩色输出
+ * 实现参考：https://docs.rs/log/0.4.14/log/#implementing-a-logger
 */
 
 use log::{Level, Metadata, Record};

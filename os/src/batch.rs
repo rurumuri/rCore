@@ -1,3 +1,13 @@
+/*!
+ * Old loader implement for batchOS, apps will be loaded to `APP_BASE_ADDRESS` and will be executed ONE BY ONE.
+ * Only one app will be in memory at one time. After all apps have been done, kernel will panic.
+ * 
+ * Defined `KernelStack` and `UserStack`, which will be placed in the kernel's bss segment (We reserved 4096 * 16 Byte for that in `entry.asm`).
+ * KernelStack is for reserving the trap info, and UserStack is for ALL user apps' function invoking.
+ * 
+ * So far we haven‘t implemented dynamic memory allocation (such as the mmap syscall for user apps), so there isn't a "UserHeap" structure now.
+*/
+
 // use core::arch::asm;
 // use crate::sync::UPSafeCell;
 // use lazy_static::*;
@@ -5,6 +15,9 @@
 // use crate::config::*;
 // use log::info;
 
+/*
+    Consts has been moved to `config.rs`
+*/
 // // const USER_STACK_SIZE: usize = 4096 * 2;
 // // const KERNEL_STACK_SIZE: usize = 4096 * 2;
 

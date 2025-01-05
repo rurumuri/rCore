@@ -1,7 +1,9 @@
-// loader.rs
-// - kernel stack's and user stack's struct and implementation
-// - [`load_apps`]: load all apps into different address at one time
-// - [`get_app_num`]: get the num of apps from _app_num in link.app.S
+/*!
+ * user app loader
+ * - kernel stack's and user stack's struct and implementation
+ * - [`load_apps`]: load all apps into different address at one time
+ * - [`get_app_num`]: get the num of apps from `_app_num` in `link.app.S`
+*/
 
 use crate::config::*;
 use crate::trap::context::TrapContext;

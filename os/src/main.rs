@@ -1,3 +1,12 @@
+/*
+ * The main procedure of the OS, mainly done tasks layed below:
+ *
+ * - initialize the boot stack space. (where KernelStack and UserStack will be placed in)
+ * - misc: print the system info, initalizing the logger...
+ * - init the trap handler and enable the time interrupt
+ * - load and run user apps
+*/
+
 #![no_main]
 #![no_std]
 #![feature(panic_info_message)]
@@ -31,11 +40,14 @@ pub fn rust_main() {
 
     os_info();
 
+    /*
+       In MultiprogOS, we split the batch mod into `task` mod and `loader` mod.
+    */
     trap::init();
     // batch::init();
-    loader::load_apps();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
+    loader::load_apps();
     // batch::run_next_app_without_load();
     task::run_first_task();
 }
@@ -83,16 +95,16 @@ fn os_info() {
     );
 }
 
-fn kernel_stack_test(x: usize) {
-    info!("[kernel] stack test {}", x);
-    // if x==701 {
-    //     os_info();
+// fn kernel_stack_test(x: usize) {
+//     info!("[kernel] stack test {}", x);
+//     // if x==701 {
+//     //     os_info();
 
-    //     trap::init();
-    //     batch::init();
-    //     loader::load_apps();
-    //     batch::run_next_app_without_load();
-    //     return;
-    // }
-    kernel_stack_test(x + 1);
-}
+//     //     trap::init();
+//     //     batch::init();
+//     //     loader::load_apps();
+//     //     batch::run_next_app_without_load();
+//     //     return;
+//     // }
+//     kernel_stack_test(x + 1);
+// }

@@ -1,3 +1,7 @@
+/*!
+ * Provide necessary panic handler needed by no_std Rust.
+*/
+
 use crate::sbi::shutdown;
 use core::panic::PanicInfo;
 use log::*;
