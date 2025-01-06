@@ -6,7 +6,7 @@ pub(crate) mod context;
 
 // use crate::batch::run_next_app_without_load;
 use crate::syscall::syscall;
-use crate::task::{exit_current_and_run_next, suspend_current_and_run_next};
+use crate::task::{exit_current_and_run_next, get_cur_task_id, suspend_current_and_run_next};
 use crate::timer::set_next_trigger;
 use crate::trap::context::TrapContext;
 use log::{error, trace, warn};
@@ -61,13 +61,19 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
         }
         Trap::Exception(Exception::StoreFault) | Trap::Exception(Exception::StorePageFault) => {
-            error!("[kernel] PageFault in application, kernel killed it.");
+            error!(
+                "[kernel] [{}] PageFault in application, kernel killed it.",
+                get_cur_task_id()
+            );
             // run_next_app();
             // run_next_app_without_load();
             exit_current_and_run_next();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            error!("[kernel] IllegalInstruction in application, kernel killed it.");
+            error!(
+                "[kernel] [{}] IllegalInstruction in application, kernel killed it.",
+                get_cur_task_id()
+            );
             // run_next_app();
             // run_next_app_without_load();
             exit_current_and_run_next();

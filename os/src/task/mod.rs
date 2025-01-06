@@ -165,3 +165,11 @@ pub fn exit_current_and_run_next() {
     mark_current_exited();
     run_next_task();
 }
+
+/// provide current task's id
+pub fn get_cur_task_id() -> usize {
+    let inner = TASK_MANAGER.inner.exclusive_access();
+    let cur_task_id = inner.current_task;
+    drop(inner);
+    cur_task_id
+}

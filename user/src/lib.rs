@@ -44,6 +44,10 @@ pub fn yield_() -> isize {
     sys_yield()
 }
 
+pub fn get_taskid() -> isize {
+    sys_get_taskid()
+}
+
 #[repr(C)]
 pub struct TimeVal {
     pub sec: usize,
