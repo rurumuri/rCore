@@ -7,9 +7,9 @@ BIN = target/riscv64gc-unknown-none-elf/$(MODE)/os.bin
 
 build:
 	if [ "$(MODE)" = "release" ]; then \
-		cargo build --release; \
+		cargo build --release --features "$(FEATURE)"; \
 	else \
-		cargo build; \
+		cargo build --features "$(FEATURE)"; \
 	fi
 	rust-objcopy --strip-all $(TARGET) -O binary $(BIN)
 
@@ -29,7 +29,7 @@ run: build
     -device loader,file=$(BIN),addr=0x80200000
 
 fmt:
-	cargo fmt -- --check
+	cargo fmt --check
 
 fmt-fix:
 	cargo fmt

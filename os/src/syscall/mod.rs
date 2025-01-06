@@ -20,7 +20,23 @@ use fs::*;
 use process::*;
 use time::*;
 
+use crate::task::get_cur_task_id;
+use log::trace;
+
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+    #[cfg(feature = "trace_syscalls")]
+    {
+        match syscall_id {
+            SYSCALL_EXIT => {
+                trace!(
+                    "[kernel] [{}] Application syscall trace: {}",
+                    get_cur_task_id(),
+                    syscall_id
+                );
+            }
+            _ => {}
+        }
+    }
     match syscall_id {
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as i32),
