@@ -1,10 +1,10 @@
-/*
-    简单的logger，支持log等级控制和彩色输出
-    实现参考：https://docs.rs/log/0.4.14/log/#implementing-a-logger
+/*!
+ * 简单的logger，支持log等级控制和彩色输出
+ * 实现参考：https://docs.rs/log/0.4.14/log/#implementing-a-logger
 */
 
-use log::{Record, Level, Metadata};
-use log::{SetLoggerError, LevelFilter};
+use log::{Level, Metadata, Record};
+use log::{LevelFilter, SetLoggerError};
 
 use crate::println;
 
@@ -17,7 +17,6 @@ impl log::Log for MyLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-
             let color = match record.level() {
                 Level::Error => 31,
                 Level::Warn => 93,
@@ -26,7 +25,12 @@ impl log::Log for MyLogger {
                 Level::Trace => 90,
             };
 
-            println!("\x1b[{}m[{}]\t{}\x1b[0m", color, record.level(), record.args());
+            println!(
+                "\x1b[{}m[{}]\t{}\x1b[0m",
+                color,
+                record.level(),
+                record.args()
+            );
         }
     }
 

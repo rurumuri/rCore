@@ -1,3 +1,9 @@
+/*
+    Building script which will be executed before os building.
+    Making sure the latest `src/link_app.S` exists,
+    which will be used to link the user apps' binary into the os image
+*/
+
 use std::fs::{read_dir, File};
 use std::io::{Result, Write};
 
@@ -53,4 +59,4 @@ app_{0}_end:"#,
         )?;
     }
     Ok(())
-} 
+}
