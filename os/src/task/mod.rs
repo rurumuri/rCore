@@ -1,6 +1,6 @@
 /*!
  * task
- * user app execute and switch
+ * task (user app) execute and switch
  *
 */
 

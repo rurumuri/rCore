@@ -48,7 +48,7 @@ pub fn enable_timer_interrupt() {
 ///
 /// Will be called by `__alltraps` with the unmodified TrapContext at `a0(x10)` as argument.
 /// Handle the trap according to trap's exception type.
-/// After that, `__restore` in `trap.S` will be executed continually, then return to U mode by `sret`.
+/// After that, `__restore` in `trap.S` will be executed continually (if no panic), then return to U mode by `sret`.
 ///
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
@@ -72,6 +72,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             // run_next_app_without_load();
             exit_current_and_run_next();
         }
+        // currently we don't support S mode timer interrupt
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             // trace!("[kernel] Timer Interrupt.");
             set_next_trigger();

@@ -1,5 +1,16 @@
+/*!
+ * task data structures
+ * - [`TaskStatus`]
+ * - [`TaskControlBlock`]
+*/
+
 use super::context::TaskContext;
 
+/// for one task:
+/// when init TASK_MANAGER: N/A -> `UnInit`
+/// when init apps' task context at TASK_MANAGER: `UnInit` -> `Ready`
+/// when `mark_current_suspended`: `Running` -> `Ready`
+/// when task exit: `Running` -> `Exited`
 #[derive(Copy, Clone, PartialEq)]
 pub enum TaskStatus {
     UnInit,  // 未初始化
