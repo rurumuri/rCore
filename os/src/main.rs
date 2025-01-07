@@ -10,6 +10,9 @@
 #![no_main]
 #![no_std]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
+
+extern crate alloc;
 
 use core::arch::global_asm;
 
@@ -23,6 +26,7 @@ mod sync;
 // mod batch;
 mod config;
 mod loader;
+mod mm;
 mod syscall;
 mod task;
 mod timer;
@@ -40,6 +44,8 @@ pub fn rust_main() {
 
     os_info();
 
+    mm::heap_allocator::init_heap();
+    mm::heap_allocator::heap_test();
     /*
        In MultiprogOS, we split the batch mod into `task` mod and `loader` mod.
     */
