@@ -13,6 +13,8 @@
 #![feature(alloc_error_handler)]
 
 extern crate alloc;
+#[macro_use]
+extern crate bitflags;
 
 use core::arch::global_asm;
 
@@ -46,6 +48,7 @@ pub fn rust_main() {
 
     mm::heap_allocator::init_heap();
     mm::heap_allocator::heap_test();
+    mm::frame_allocator::init_frame_allocator();
     /*
        In MultiprogOS, we split the batch mod into `task` mod and `loader` mod.
     */
