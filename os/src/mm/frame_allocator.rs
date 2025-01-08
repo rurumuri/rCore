@@ -44,10 +44,15 @@ impl FrameAllocator for StackFrameAllocator {
         let ppn = ppn.0;
         // validity check
         if ppn >= self.current || self.recycled.iter().find(|&v| *v == ppn).is_some() {
-            panic!("Frame ppn={:#x} has not been allocated!", ppn);
+            // panic!("Frame ppn={:#x} has not been allocated!", ppn);
+            warn!(
+                "[kernel] Frame ppn={:#x} has not been allocated, but now trying to dealloc it!",
+                ppn
+            );
+        } else {
+            // recycle
+            self.recycled.push(ppn);
         }
-        // recycle
-        self.recycled.push(ppn);
     }
 }
 

@@ -76,3 +76,7 @@ pub fn get_time_us() -> usize {
 pub fn get_time() -> usize {
     get_time_us() / 1000
 }
+
+pub fn sbrk(size: i32) -> isize {
+    sys_sbrk(size)
+}
