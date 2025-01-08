@@ -8,10 +8,14 @@ mod context;
 mod switch;
 mod task;
 
+use core::cell::RefCell;
+
 use crate::config::MAX_APP_NUM;
-use crate::loader::{get_app_num, init_app_cx};
+use crate::loader::{get_app_data, get_app_num};
 use crate::sbi::shutdown;
 use crate::sync::UPSafeCell;
+use crate::trap::context::TrapContext;
+use alloc::vec::Vec;
 use context::TaskContext;
 use lazy_static::lazy_static;
 use log::trace;
@@ -24,35 +28,54 @@ pub struct TaskManager {
 }
 
 struct TaskManagerInner {
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    tasks: Vec<TaskControlBlock>,
     current_task: usize,
 }
 
-// TASK_MANAGER will be initialized when first visited
+// // TASK_MANAGER will be initialized when first visited
+// lazy_static! {
+//     pub static ref TASK_MANAGER: TaskManager = {
+//         // trace!("[kernel] TASK_MANAGER has been initialized");
+//         let app_num = get_app_num();
+//         let mut tasks = [
+//             TaskControlBlock {
+//                 task_status: TaskStatus::UnInit,
+//                 task_cx: TaskContext::zero_init(),
+//             };
+//             MAX_APP_NUM
+//         ];
+
+//         // init apps' context and set their status as ready for the first run
+//         for i in 0..app_num {
+//             tasks[i].task_cx = TaskContext::goto_restore(init_app_cx(i));
+//             tasks[i].task_status = TaskStatus::Ready;
+//         }
+
+//         TaskManager {
+//             num_app: app_num,
+//             inner: UPSafeCell::new(TaskManagerInner {
+//                 tasks,
+//                 current_task: 0,
+//             })
+//         }
+//     };
+// }
+
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
-        // trace!("[kernel] TASK_MANAGER has been initialized");
-        let app_num = get_app_num();
-        let mut tasks = [
-            TaskControlBlock {
-                task_status: TaskStatus::UnInit,
-                task_cx: TaskContext::zero_init(),
-            };
-            MAX_APP_NUM
-        ];
-
-        // init apps' context and set their status as ready for the first run
-        for i in 0..app_num {
-            tasks[i].task_cx = TaskContext::goto_restore(init_app_cx(i));
-            tasks[i].task_status = TaskStatus::Ready;
+        println!("init TASK_MANAGER");
+        let num_app = get_app_num();
+        println!("num_app = {}", num_app);
+        let mut tasks: Vec<TaskControlBlock> = Vec::new();
+        for i in 0..num_app {
+            tasks.push(TaskControlBlock::new(get_app_data(i), i));
         }
-
         TaskManager {
-            num_app: app_num,
+            num_app,
             inner: UPSafeCell::new(TaskManagerInner {
                 tasks,
                 current_task: 0,
-            })
+            }),
         }
     };
 }
@@ -172,4 +195,26 @@ pub fn get_cur_task_id() -> usize {
     let cur_task_id = inner.current_task;
     drop(inner);
     cur_task_id
+}
+
+impl TaskManager {
+    /// Get the current 'Running' task's token.
+    fn get_current_token(&self) -> usize {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_user_token()
+    }
+
+    /// Get the current 'Running' task's trap contexts.
+    fn get_current_trap_cx(&self) -> &'static mut TrapContext {
+        let inner = self.inner.exclusive_access();
+        inner.tasks[inner.current_task].get_trap_cx()
+    }
+}
+
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    TASK_MANAGER.get_current_trap_cx()
 }

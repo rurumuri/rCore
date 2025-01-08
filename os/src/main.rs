@@ -12,9 +12,11 @@
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 
+#[macro_use]
 extern crate alloc;
 #[macro_use]
 extern crate bitflags;
+extern crate xmas_elf;
 
 use core::arch::global_asm;
 
@@ -46,9 +48,10 @@ pub fn rust_main() {
 
     os_info();
 
-    mm::heap_allocator::init_heap();
+    mm::init();
+    // mm::heap_allocator::init_heap();
     mm::heap_allocator::heap_test();
-    mm::frame_allocator::init_frame_allocator();
+    // mm::frame_allocator::init_frame_allocator();
     /*
        In MultiprogOS, we split the batch mod into `task` mod and `loader` mod.
     */
@@ -56,7 +59,7 @@ pub fn rust_main() {
     // batch::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    loader::load_apps();
+    // loader::load_apps();
     // batch::run_next_app_without_load();
     task::run_first_task();
 }

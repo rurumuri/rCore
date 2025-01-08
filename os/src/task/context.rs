@@ -3,6 +3,8 @@
  */
 use log::trace;
 
+use crate::trap::trap_return;
+
 // 经过多次debug，最终发现是缺了这里。
 // 如果不加，经过gdb检查发现__switch处加载TaskContext（在a1寄存器）后ra为0，导致访问无效内存0x0从而使内核卡死，
 // 而检查发现TaskContext发现内部的ra有效，于是考虑内存布局问题，从而解决。
@@ -34,6 +36,15 @@ impl TaskContext {
         // trace!("[kernel] goto_restore: __restore at {:#x}", __restore as usize);
         Self {
             ra: __restore as usize,
+            sp: kstack_ptr,
+            s: [0; 12],
+        }
+    }
+
+    /// set Task Context{__restore ASM funciton: trap_return, sp: kstack_ptr, s: s_0..12}
+    pub fn goto_trap_return(kstack_ptr: usize) -> Self {
+        Self {
+            ra: trap_return as usize,
             sp: kstack_ptr,
             s: [0; 12],
         }

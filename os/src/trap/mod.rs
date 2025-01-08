@@ -4,13 +4,18 @@
 
 pub(crate) mod context;
 
+use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
 // use crate::batch::run_next_app_without_load;
 use crate::syscall::syscall;
-use crate::task::{exit_current_and_run_next, get_cur_task_id, suspend_current_and_run_next};
+use crate::task::{
+    current_trap_cx, current_user_token, exit_current_and_run_next, get_cur_task_id,
+    suspend_current_and_run_next,
+};
 use crate::timer::set_next_trigger;
 use crate::trap::context::TrapContext;
 use log::{error, trace, warn};
 
+use core::arch::asm;
 use core::{arch::global_asm, f32::consts::E};
 use riscv::register::{
     mtvec::TrapMode,
@@ -45,6 +50,46 @@ pub fn enable_timer_interrupt() {
     }
 }
 
+fn set_kernel_trap_entry() {
+    unsafe {
+        stvec::write(trap_from_kernel as usize, TrapMode::Direct);
+    }
+}
+
+fn set_user_trap_entry() {
+    unsafe {
+        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
+    }
+}
+
+#[no_mangle]
+pub fn trap_from_kernel() -> ! {
+    panic!("a trap from kernel!");
+}
+
+#[no_mangle]
+pub fn trap_return() -> ! {
+    set_user_trap_entry();
+    let trap_cx_ptr = TRAP_CONTEXT;
+    let user_satp = current_user_token();
+    extern "C" {
+        fn __alltraps();
+        fn __restore();
+    }
+    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    unsafe {
+        asm!(
+            "fence.i",
+            "jr {restore_va}",
+            restore_va = in(reg) restore_va,
+            in("a0") trap_cx_ptr,
+            in("a1") user_satp,
+            options(noreturn)
+        );
+    }
+    panic!("Unreachable in back_to_user!");
+}
+
 ///
 /// Will be called by `__alltraps` with the unmodified TrapContext at `a0(x10)` as argument.
 /// Handle the trap according to trap's exception type.
@@ -52,6 +97,8 @@ pub fn enable_timer_interrupt() {
 ///
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
+    set_kernel_trap_entry();
+    let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -92,5 +139,6 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             );
         }
     }
-    cx
+    // cx
+    trap_return();
 }
